@@ -53,10 +53,23 @@ function Board:new()
     self.next = Bag
 end
 
+function Board:update(dt)
+    if Input.right.pressed then
+        self.current:move(1, 0, self)
+    end
+    if Input.left.pressed then
+        self.current:move(-1, 0, self)
+    end
+    if Input.soft_drop.down then
+        self.current:move(0, 1, self)
+    end
+end
+
 function Board:draw_mino(x, y ,mino_type)
     local sx, sy = unpack(mino_draw_offset[mino_type])
     Mino.draw_mino(x, y, mino_type, 0, sx, sy)
 end
+
 
 function Board:draw()
     local bx, by = self.x-corner_offest_x, self.y-corner_offest_y

@@ -1,13 +1,13 @@
 Bag = {"i", "o", "t", "s", "z", "j", "l"}
 
 local spawn = {
-    i = {x = 4, y = 17},
-    o = {x = 4, y = 18},
-    t = {x = 4, y = 18},
-    s = {x = 4, y = 18},
-    z = {x = 4, y = 18},
-    j = {x = 4, y = 18},
-    l = {x = 4, y = 18}
+    i = {x = 5, y = 18},
+    o = {x = 5, y = 19},
+    t = {x = 5, y = 19},
+    s = {x = 5, y = 19},
+    z = {x = 5, y = 19},
+    j = {x = 5, y = 19},
+    l = {x = 5, y = 19}
 }
 
 local cells = {
@@ -110,27 +110,55 @@ local srs = {
 
 local Mino = Object:extend()
 
-Mino.wallKick = srs
-
 function Mino:new(type)
     self.type = type
     local pos = spawn[self.type]
     self.x = pos.x
-    self.y = pos.y-BUFFER_H
+    self.y = pos.y
     self.r = 0
 end
 
 function Mino:draw(bx, by)
-    self.draw_mino(bx, by, self.type, self.r, self.x, self.y)
+    self.draw_mino(bx, by, self.type, self.r, self.x-1, self.y-BUFFER_H-1)
 end
 
-function Mino.draw_mino(bx, by, type, r, sx, sy)
+function Mino.draw_mino(bx, by, mino_type, r, sx, sy)
     for i = 1, 4 do
-        local cx, cy = unpack(cells[type][r][i])
+        local cx, cy = unpack(cells[mino_type][r][i])
         local x = sx+cx
         local y = sy+cy
-        love.graphics.draw(Image[type], bx+x*TILE_SIZE, by+y*TILE_SIZE)
+        love.graphics.draw(Image[mino_type], bx+x*TILE_SIZE, by+y*TILE_SIZE)
     end
+end
+
+function Mino:move(dx, dy, board)
+    local old_x, old_y = self.x, self.y
+    self.x = self.x+dx
+    self.y = self.y+dy
+    if self:check_collision(board) then
+        self.x = old_x
+        self.y = old_y
+    end
+end
+
+function Mino:rotate()
+    
+end
+
+function Mino:check_collision(board)
+    for i = 1, 4 do
+        local cx, cy = unpack(cells[self.type][self.r][i])
+        local x = self.x+cx
+        local y = self.y+cy
+        if 1 <= x and x <= BOARD_W and 1 <= y and y <= BUFFER_H+BOARD_H then
+            if board.grid[y][x] ~= "" then
+                return true
+            end
+        else
+            return true
+        end
+    end
+    return false
 end
 
 return Mino
