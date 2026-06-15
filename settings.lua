@@ -7,6 +7,12 @@ Input.hold = NewInput({"lshift"})
 Input.hard_drop = NewInput({"space"})
 Input.soft_drop = NewInput({"down"})
 
+Config = {
+    arr = 0,
+    das = 117,
+    sdarr = 0,
+}
+
 -- Audio:add("jump")
 
 NewImage("bg")

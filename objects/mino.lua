@@ -141,8 +141,18 @@ function Mino:move(dx, dy, board)
     end
 end
 
-function Mino:rotate()
-    
+function Mino:rotate(dir, board)
+    local old_r = self.r
+    local old_x, old_y = self.x, self.y
+    self.r = (self.r+dir)%4
+    for i, kick in ipairs(srs[self.type][old_r][self.r]) do
+        local dx, dy = unpack(kick)
+        self.x = old_x+dx
+        self.y = old_y+dy
+        if not self:check_collision(board) then
+            return
+        end
+    end
 end
 
 function Mino:check_collision(board)
@@ -159,6 +169,15 @@ function Mino:check_collision(board)
         end
     end
     return false
+end
+
+function Mino:lock(board)
+    for i = 1, 4 do
+        local cx, cy = unpack(cells[self.type][self.r][i])
+        local x = self.x+cx
+        local y = self.y+cy
+        board.grid[y][x] = self.type
+    end
 end
 
 return Mino

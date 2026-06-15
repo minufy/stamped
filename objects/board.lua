@@ -51,17 +51,76 @@ function Board:new()
     self.hold = nil
     self.hold_used = false
     self.next = Bag
+    self.arr = 0
+    self.das = 0
+    self.sdarr = 0
+    self.ix = 0
 end
 
 function Board:update(dt)
+    local time = love.timer.getTime()*1000
+
     if Input.right.pressed then
+        self.ix = 1
         self.current:move(1, 0, self)
+        self.das = time+Config.das
+    elseif Input.right.released then
+        if Input.left.down then
+            self.ix = -1
+        else
+            self.ix = 0
+        end
     end
     if Input.left.pressed then
+        self.ix = -1
         self.current:move(-1, 0, self)
+        self.das = time+Config.das
+    elseif Input.left.released then
+        if Input.right.down then
+            self.ix = 1
+        else
+            self.ix = 0
+        end
+    end
+    if Input.soft_drop.pressed then
+        self.sdarr = time+Config.sdarr
+    end
+
+    if time >= self.das then
+        if self.ix ~= 0 then
+            for _ = 1, BOARD_W do
+                if time >= self.arr then
+                    self.arr = self.arr+Config.arr
+                else
+                    break
+                end
+                self.current:move(self.ix, 0, self)
+            end
+        end
     end
     if Input.soft_drop.down then
-        self.current:move(0, 1, self)
+        for _ = 1, BOARD_H+BUFFER_H do
+            if time >= self.sdarr then
+                self.sdarr = self.sdarr+Config.sdarr
+            else
+                break
+            end
+            self.current:move(0, 1, self)
+        end
+    end
+
+    if Input.cw.pressed then
+        self.current:rotate(1, self)
+    end
+    if Input.ccw.pressed then
+        self.current:rotate(-1, self)
+    end
+
+    if Input.hard_drop.pressed then
+        for _ = 1, BOARD_H+BUFFER_H do
+            self.current:move(0, 1, self)
+        end
+        self.current:lock(self)
     end
 end
 
@@ -69,7 +128,6 @@ function Board:draw_mino(x, y ,mino_type)
     local sx, sy = unpack(mino_draw_offset[mino_type])
     Mino.draw_mino(x, y, mino_type, 0, sx, sy)
 end
-
 
 function Board:draw()
     local bx, by = self.x-corner_offest_x, self.y-corner_offest_y
@@ -102,8 +160,10 @@ function Board:draw()
             end
         end
     end
+    -- love.graphics.setScissor(self.x-corner_offest_x, self.y-corner_offest_y, BOARD_W*gap+corner_offest_x*2, BOARD_H*gap+corner_offest_y*2)
     self.current:draw(self.x, self.y)
-    love.graphics.draw(Image.board, bx, by)
+    -- love.graphics.draw(Image.board, bx, by)
+    -- love.graphics.setScissor()
 end
 
 return Board
