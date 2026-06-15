@@ -1,0 +1,1 @@
+return {["tiles"]={["0,0"]="tile"},["objects"]={["object_8"]={["y"]=0,["x"]=16,["type"]="player"}},["next_ids"]={["img"]=2,["object"]=15},["img_objects"]={}}
