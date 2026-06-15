@@ -161,7 +161,7 @@ function Mino:check_collision(board)
         local x = self.x+cx
         local y = self.y+cy
         if 1 <= x and x <= BOARD_W and 1 <= y and y <= BUFFER_H+BOARD_H then
-            if board.grid[y][x] ~= "" then
+            if board.grid[y][x] ~= nil then
                 return true
             end
         else

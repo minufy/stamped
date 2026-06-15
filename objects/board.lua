@@ -21,6 +21,9 @@ NewImage("z")
 BOARD_W = 10
 BOARD_H = 20
 BUFFER_H = 20
+
+local ghost_alpha = 0.6
+
 local corner_offest_x = 18
 local corner_offest_y = 78
 local gap = 20
@@ -45,14 +48,14 @@ function Board:new()
     for _ = 1, BUFFER_H+BOARD_H do
         local row = {}
         for _ = 1, BOARD_W do
-            table.insert(row, "")
+            table.insert(row, nil)
         end
         table.insert(self.grid, row)
     end
     self.next = {}
     self:add_next()
     self.current = self:get_next()
-    self.hold = nil
+    self.hold_type = nil
     self.hold_used = false
     self.arr = 0
     self.das = 0
@@ -137,6 +140,25 @@ function Board:update(dt)
     if Input.hard_drop.pressed then
         self:hard_drop()
     end
+
+    if Input.hold.pressed then
+        self:hold()
+    end
+end
+
+function Board:hold()
+    if self.hold_used then
+        return
+    end
+    self.hold_used = true
+    if self.hold_type == nil then
+        self.hold_type = self.current.type
+        self.current = self:get_next()
+    else
+        local hold_type = self.hold_type
+        self.hold_type = self.current.type
+        self.current = Mino(hold_type)
+    end
 end
 
 function Board:hard_drop()
@@ -145,11 +167,53 @@ function Board:hard_drop()
     end
     self.current:lock(self)
     self.current = self:get_next()
+    self.hold_used = false
+    self:clear_lines()
 end
 
 function Board:draw_mino(x, y ,mino_type)
     local sx, sy = unpack(mino_draw_offset[mino_type])
     Mino.draw_mino(x, y, mino_type, 0, sx, sy)
+end
+
+function Board:draw_ghost()
+    local ghost = Mino(self.current.type)
+    ghost.x = self.current.x
+    ghost.y = self.current.y
+    ghost.r = self.current.r
+    for _ = 1, BOARD_H+BUFFER_H do
+        ghost:move(0, 1, self)
+    end
+    love.graphics.setColor(1, 1, 1, ghost_alpha)
+    ghost:draw(self.x, self.y)
+    Color.reset()
+end
+
+function Board:clear_lines()
+    local count = 0
+    local y = 1
+    while y <= BOARD_H+BUFFER_H do
+        local full = true
+        for x = 1, BOARD_W do
+            if self.grid[y][x] == nil then
+                full = false
+                break
+            end
+        end
+
+        if full then
+            table.remove(self.grid, y)
+            local row = {}
+            for _ = 1, BOARD_W do
+                table.insert(row, nil)
+            end
+            table.insert(self.grid, 1, row)
+            count = count+1
+        else
+            y = y+1
+        end
+    end
+    return count
 end
 
 function Board:draw()
@@ -160,11 +224,11 @@ function Board:draw()
     local hold_x = self.x-corner_offest_x-gap-Image.hold:getWidth()
     local hold_y = self.y-corner_offest_y
     love.graphics.draw(Image.hold, hold_x, hold_y)
-    if self.hold ~= nil then
+    if self.hold_type ~= nil then
         if self.hold_used then
-            love.graphics.setColor(1, 1, 1, 0.5)
+            love.graphics.setColor(1, 1, 1, ghost_alpha)
         end
-        self:draw_mino(hold_x+hold_offset_x+gap, hold_y+hold_offset_y+gap, self.hold)
+        self:draw_mino(hold_x+hold_offset_x+gap, hold_y+hold_offset_y+gap, self.hold_type)
         Color.reset()
     end
     
@@ -175,10 +239,12 @@ function Board:draw()
         self:draw_mino(next_x+next_offset_x+gap, next_y+next_offset_y+gap+(i-1)*TILE_SIZE*3, self.next[i])
     end
 
+    self:draw_ghost()
+
     for y = 1, BUFFER_H+BOARD_H do
         for x = 1, BOARD_W do
             local cell = self.grid[y][x]
-            if cell ~= "" then
+            if cell ~= nil then
                 love.graphics.draw(Image[cell], self.x+(x-1)*TILE_SIZE, self.y+(y-1-BUFFER_H)*TILE_SIZE)
             end
         end
