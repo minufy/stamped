@@ -6,7 +6,6 @@ SetType(Board, "board")
 local Mino = require("objects.mino")
 
 NewImage("board")
-NewImage("board_back")
 NewImage("hold")
 NewImage("next")
 NewImage("g")
@@ -24,13 +23,18 @@ BUFFER_H = 20
 
 local ghost_alpha = 0.6
 
-local corner_offest_x = 18
-local corner_offest_y = 78
+local corner_offest_x = 3
+local corner_offest_y = 0
 local gap = 20
-local hold_offset_x = 24
-local hold_offset_y = 49
-local next_offset_x = 24
-local next_offset_y = 49
+
+local hold_mino_x = 24
+local hold_mino_y = 49
+local hold_offset_y = -10
+
+local next_mino_x = 24
+local next_mino_y = 49
+local next_offset_y = -10
+
 local mino_draw_offset = {
     i = {0, -0.5},
     j = {0.5, 0},
@@ -136,6 +140,9 @@ function Board:update(dt)
     if Input.ccw.pressed then
         self.current:rotate(-1, self)
     end
+    if Input.flip.pressed then
+        self.current:rotate(2, self)
+    end
 
     if Input.hard_drop.pressed then
         self:hard_drop()
@@ -200,7 +207,6 @@ function Board:clear_lines()
                 break
             end
         end
-
         if full then
             table.remove(self.grid, y)
             local row = {}
@@ -219,24 +225,24 @@ end
 function Board:draw()
     local bx, by = self.x-corner_offest_x, self.y-corner_offest_y
 
-    love.graphics.draw(Image.board_back, bx, by)
+    love.graphics.draw(Image.board, bx, by)
     
     local hold_x = self.x-corner_offest_x-gap-Image.hold:getWidth()
-    local hold_y = self.y-corner_offest_y
+    local hold_y = self.y-corner_offest_y+hold_offset_y
     love.graphics.draw(Image.hold, hold_x, hold_y)
     if self.hold_type ~= nil then
         if self.hold_used then
             love.graphics.setColor(1, 1, 1, ghost_alpha)
         end
-        self:draw_mino(hold_x+hold_offset_x+gap, hold_y+hold_offset_y+gap, self.hold_type)
+        self:draw_mino(hold_x+hold_mino_x+gap, hold_y+hold_mino_y+gap, self.hold_type)
         Color.reset()
     end
     
     local next_x = self.x+corner_offest_x+BOARD_W*TILE_SIZE+gap
-    local next_y = self.y-corner_offest_y
+    local next_y = self.y-corner_offest_y+next_offset_y
     love.graphics.draw(Image.next, next_x, next_y)
     for i = 1, 5 do
-        self:draw_mino(next_x+next_offset_x+gap, next_y+next_offset_y+gap+(i-1)*TILE_SIZE*3, self.next[i])
+        self:draw_mino(next_x+next_mino_x+gap, next_y+next_mino_y+gap+(i-1)*TILE_SIZE*3, self.next[i])
     end
 
     self:draw_ghost()
@@ -249,10 +255,8 @@ function Board:draw()
             end
         end
     end
-    -- love.graphics.setScissor(self.x-corner_offest_x, self.y-corner_offest_y, BOARD_W*gap+corner_offest_x*2, BOARD_H*gap+corner_offest_y*2)
+    
     self.current:draw(self.x, self.y)
-    -- love.graphics.draw(Image.board, bx, by)
-    -- love.graphics.setScissor()
 end
 
 return Board
