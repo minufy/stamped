@@ -48,7 +48,8 @@ function Board:new()
         table.insert(self.grid, row)
     end
     self.current = Mino("i")
-    self.hold = "o"
+    self.hold = nil
+    self.hold_used = false
     self.next = Bag
 end
 
@@ -66,7 +67,11 @@ function Board:draw()
     local hold_y = self.y-corner_offest_y
     love.graphics.draw(Image.hold, hold_x, hold_y)
     if self.hold ~= nil then
+        if self.hold_used then
+            love.graphics.setColor(1, 1, 1, 0.5)
+        end
         self:draw_mino(hold_x+hold_offset_x+gap, hold_y+hold_offset_y+gap, self.hold)
+        Color.reset()
     end
     
     local next_x = self.x+corner_offest_x+BOARD_W*TILE_SIZE+gap
@@ -75,8 +80,7 @@ function Board:draw()
     for i = 1, 5 do
         self:draw_mino(next_x+next_offset_x+gap, next_y+next_offset_y+gap+(i-1)*TILE_SIZE*3, self.next[i])
     end
-    
-    
+
     for y = 1, BUFFER_H+BOARD_H do
         for x = 1, BOARD_W do
             local cell = self.grid[y][x]
