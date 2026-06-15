@@ -1,3 +1,5 @@
+local lume = require("modules.lume")
+
 local Board = Object:extend()
 SetType(Board, "board")
 
@@ -47,14 +49,30 @@ function Board:new()
         end
         table.insert(self.grid, row)
     end
-    self.current = Mino("i")
+    self.next = {}
+    self:add_next()
+    self.current = self:get_next()
     self.hold = nil
     self.hold_used = false
-    self.next = Bag
     self.arr = 0
     self.das = 0
     self.sdarr = 0
     self.ix = 0
+end
+
+function Board:add_next()
+    local bag = lume.shuffle(Bag)
+    for i, mino_type in ipairs(bag) do
+        table.insert(self.next, mino_type)
+    end
+end
+
+function Board:get_next()
+    local next_type = table.remove(self.next, 1)
+    if #self.next < 5 then
+        self:add_next()
+    end
+    return Mino(next_type)
 end
 
 function Board:update(dt)
@@ -117,11 +135,16 @@ function Board:update(dt)
     end
 
     if Input.hard_drop.pressed then
-        for _ = 1, BOARD_H+BUFFER_H do
-            self.current:move(0, 1, self)
-        end
-        self.current:lock(self)
+        self:hard_drop()
     end
+end
+
+function Board:hard_drop()
+    for _ = 1, BOARD_H+BUFFER_H do
+        self.current:move(0, 1, self)
+    end
+    self.current:lock(self)
+    self.current = self:get_next()
 end
 
 function Board:draw_mino(x, y ,mino_type)
@@ -156,7 +179,7 @@ function Board:draw()
         for x = 1, BOARD_W do
             local cell = self.grid[y][x]
             if cell ~= "" then
-                love.graphics.draw(Image[cell], self.x+(x-1)*TILE_SIZE, self.y+(y-1)*TILE_SIZE)
+                love.graphics.draw(Image[cell], self.x+(x-1)*TILE_SIZE, self.y+(y-1-BUFFER_H)*TILE_SIZE)
             end
         end
     end
