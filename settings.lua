@@ -6,6 +6,8 @@ Input.left = NewInput({"left", "a"})
 
 -- Audio:add("jump")
 
+NewImage("bg")
+
 Camera.x_damp = 0.2
 Camera.y_damp = 0.2
 Camera.shake_damp = 0.2
@@ -21,7 +23,7 @@ IMG_TYPES = {
     "test",
 }
 
-TILE_SIZE = 16
+TILE_SIZE = 20
 GRID_SIZE = TILE_SIZE/2
 
 local object_align = {

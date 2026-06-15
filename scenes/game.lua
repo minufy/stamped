@@ -2,18 +2,15 @@ Game = {}
 local GameBase = require("stuff.game_base")
 GameBase(Game)
 
-function Game:init()
-    Edit:init()
-    Level:init("1")
-end
+local Board = require("objects.board")
 
-function Game:before_reload()
+function Game:init()
     self:base_reload()
     self.objects = {}
+    self:add(Board)
 end
 
 function Game:update(dt)
-    Edit:update(dt)
     Camera:update(dt)
 
     if not Edit.editing then
@@ -40,10 +37,8 @@ function Game:update(dt)
 end
 
 function Game:draw()
-    love.graphics.setColor(rgb(49, 77, 121))
-    love.graphics.rectangle("fill", 0, 0, Res.w, Res.h)
-    Color.reset()
-    
+    love.graphics.draw(Image.bg)
+
     Camera:start()
     Shadow:start()
     
@@ -55,16 +50,7 @@ function Game:draw()
         end
     end
     
-    if Edit.editing then
-        Edit:draw()
-    end
-    
     Camera:stop()
-
-    if Edit.editing then
-        Edit:draw_hud()
-    end
-
     Shadow:stop()
 end
 
