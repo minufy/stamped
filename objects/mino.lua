@@ -121,11 +121,15 @@ function Mino:new(type)
 end
 
 function Mino:draw(bx, by)
+    self.draw_mino(bx, by, self.type, self.r, self.x, self.y)
+end
+
+function Mino.draw_mino(bx, by, type, r, sx, sy)
     for i = 1, 4 do
-        local cx, cy = unpack(cells[self.type][self.r][i])
-        local x = self.x+cx
-        local y = self.y+cy
-        love.graphics.draw(Image[self.type], bx+x*TILE_SIZE, by+y*TILE_SIZE)
+        local cx, cy = unpack(cells[type][r][i])
+        local x = sx+cx
+        local y = sy+cy
+        love.graphics.draw(Image[type], bx+x*TILE_SIZE, by+y*TILE_SIZE)
     end
 end
 

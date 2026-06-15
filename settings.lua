@@ -1,8 +1,11 @@
-Input.right = NewInput({"right", "d"})
-Input.left = NewInput({"left", "a"})
--- Input.up = NewInput({"up", "w"})
--- Input.down = NewInput({"down", "s"})
--- Input.jump = NewInput({"space", "up", "w", "lshift"})
+Input.left = NewInput({"left"})
+Input.right = NewInput({"right"})
+Input.cw = NewInput({"up"})
+Input.ccw = NewInput({"lctrl"})
+Input.flip = NewInput({"a"})
+Input.hold = NewInput({"lshift"})
+Input.hard_drop = NewInput({"space"})
+Input.soft_drop = NewInput({"down"})
 
 -- Audio:add("jump")
 
