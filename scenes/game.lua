@@ -40,7 +40,7 @@ function Game:draw()
     love.graphics.draw(Image.bg)
 
     Camera:start()
-    Shadow:start()
+    Outline:start()
     
     for group_name, group in pairs(self.objects) do
         for _, object in ipairs(group) do
@@ -51,7 +51,7 @@ function Game:draw()
     end
     
     Camera:stop()
-    Shadow:stop()
+    Outline:stop()
 end
 
 return Game
