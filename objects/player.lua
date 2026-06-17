@@ -1,47 +1,82 @@
 local Player = Object:extend()
 
-NewImage("player")
-
-function Player:new(data)
-    self.x = data.x
-    self.y = data.y
-    self.w = Image.player:getWidth()
-    self.h = Image.player:getHeight()
-
-    self.mx = 0
-    self.cbs = {
-        x = function (other)
-            self:cb_x(other)
-        end
-    }
-
-    if not Edit.editing then
-        Camera:offset(Res.w/2, Res.h/2)
-        Camera:set(self.x+self.w/2, self.y+self.h/2)
-        Camera:snap_back()
-    end
-end
-
-function Player:cb_x(other)
-    Physics.solve_x(self, self.mx, other)
+function Player:new(board)
+    self.board = board
+    self.arr = 0
+    self.das = 0
+    self.sdarr = 0
+    self.ix = 0
 end
 
 function Player:update(dt)
-    Camera:set(self.x+self.w/2, self.y+self.h/2)
-    local ix = 0
-    if Input.right.down then
-        ix = ix+1
-    end
-    if Input.left.down then
-        ix = ix-1
-    end
-    self.mx = ix*2
-    self.x = self.x+self.mx*dt
-    Physics.col_tiles(self, self.cbs.x)
-end
+    local time = love.timer.getTime()*1000
 
-function Player:draw()
-    love.graphics.draw(Image.player, self.x, self.y)
+    if Input.right.pressed then
+        self.ix = 1
+        self.board:move_current(1, 0)
+        self.das = time+Config.das
+    elseif Input.right.released then
+        if Input.left.down then
+            self.ix = -1
+        else
+            self.ix = 0
+        end
+    end
+    if Input.left.pressed then
+        self.ix = -1
+        self.board:move_current(-1, 0)
+        self.das = time+Config.das
+    elseif Input.left.released then
+        if Input.right.down then
+            self.ix = 1
+        else
+            self.ix = 0
+        end
+    end
+    if Input.soft_drop.pressed then
+        self.sdarr = time+Config.sdarr
+    end
+
+    if time >= self.das then
+        if self.ix ~= 0 then
+            for _ = 1, BOARD_W do
+                if time >= self.arr then
+                    self.arr = self.arr+Config.arr
+                else
+                    break
+                end
+                self.board:move_current(self.ix, 0)
+            end
+        end
+    end
+    if Input.soft_drop.down then
+        for _ = 1, BOARD_H+BUFFER_H do
+            if time >= self.sdarr then
+                self.sdarr = self.sdarr+Config.sdarr
+            else
+                break
+            end
+            self.board:move_current(0, 1)
+        end
+    end
+
+    if Input.cw.pressed then
+        self.board:rotate_current(1)
+    end
+    if Input.ccw.pressed then
+        self.board:rotate_current(-1)
+    end
+    if Input.flip.pressed then
+        self.board:rotate_current(2)
+    end
+
+    if Input.hard_drop.pressed then
+        self.board:hard_drop()
+    end
+
+    if Input.hold.pressed then
+        self.board:hold()
+    end
 end
 
 return Player

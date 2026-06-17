@@ -1,5 +1,3 @@
-local lume = require("modules.lume")
-
 local Board = Object:extend()
 SetType(Board, "board")
 
@@ -35,6 +33,8 @@ local next_mino_x = 24
 local next_mino_y = 49
 local next_offset_y = -10
 
+local compact_scale = 0.5
+
 local mino_draw_offset = {
     i = {0, -0.5},
     j = {0.5, 0},
@@ -45,10 +45,20 @@ local mino_draw_offset = {
     z = {0.5, 0},
 }
 
-function Board:new()
+function Board:new(seed, x, y, options)
+    seed = seed or 1
+    x = x or 0
+    y = y or 0
+    self.rng = love.math.newRandomGenerator(seed)
+    self.options = options
+    
     self.grid = {}
-    self.x = Res.w/2-BOARD_W*TILE_SIZE/2+corner_offest_x/2
-    self.y = Res.h/2-BOARD_H*TILE_SIZE/2+corner_offest_y/2
+    local d = 1
+    if self.options.compact then
+        d = d/compact_scale
+    end
+    self.x = x*d-BOARD_W*TILE_SIZE/2+corner_offest_x/2
+    self.y = y*d-BOARD_H*TILE_SIZE/2+corner_offest_y/2
     for _ = 1, BUFFER_H+BOARD_H do
         local row = {}
         for _ = 1, BOARD_W do
@@ -61,14 +71,22 @@ function Board:new()
     self.current = self:get_next()
     self.hold_type = nil
     self.hold_used = false
-    self.arr = 0
-    self.das = 0
-    self.sdarr = 0
-    self.ix = 0
+end
+
+function Board:shuffle(t)
+    local rtn = {}
+    for i = 1, #t do
+        local r = self.rng:random(1, i)
+        if r ~= i then
+            rtn[i] = rtn[r]
+        end
+        rtn[r] = t[i]
+    end
+    return rtn
 end
 
 function Board:add_next()
-    local bag = lume.shuffle(Bag)
+    local bag = self:shuffle(Bag)
     for i, mino_type in ipairs(bag) do
         table.insert(self.next, mino_type)
     end
@@ -83,74 +101,15 @@ function Board:get_next()
 end
 
 function Board:update(dt)
-    local time = love.timer.getTime()*1000
 
-    if Input.right.pressed then
-        self.ix = 1
-        self.current:move(1, 0, self)
-        self.das = time+Config.das
-    elseif Input.right.released then
-        if Input.left.down then
-            self.ix = -1
-        else
-            self.ix = 0
-        end
-    end
-    if Input.left.pressed then
-        self.ix = -1
-        self.current:move(-1, 0, self)
-        self.das = time+Config.das
-    elseif Input.left.released then
-        if Input.right.down then
-            self.ix = 1
-        else
-            self.ix = 0
-        end
-    end
-    if Input.soft_drop.pressed then
-        self.sdarr = time+Config.sdarr
-    end
+end
 
-    if time >= self.das then
-        if self.ix ~= 0 then
-            for _ = 1, BOARD_W do
-                if time >= self.arr then
-                    self.arr = self.arr+Config.arr
-                else
-                    break
-                end
-                self.current:move(self.ix, 0, self)
-            end
-        end
-    end
-    if Input.soft_drop.down then
-        for _ = 1, BOARD_H+BUFFER_H do
-            if time >= self.sdarr then
-                self.sdarr = self.sdarr+Config.sdarr
-            else
-                break
-            end
-            self.current:move(0, 1, self)
-        end
-    end
+function Board:rotate_current(dir)
+    self.current:rotate(dir, self)
+end
 
-    if Input.cw.pressed then
-        self.current:rotate(1, self)
-    end
-    if Input.ccw.pressed then
-        self.current:rotate(-1, self)
-    end
-    if Input.flip.pressed then
-        self.current:rotate(2, self)
-    end
-
-    if Input.hard_drop.pressed then
-        self:hard_drop()
-    end
-
-    if Input.hold.pressed then
-        self:hold()
-    end
+function Board:move_current(dx, dy)
+    self.current:move(dx, dy, self)
 end
 
 function Board:hold()
@@ -224,29 +183,33 @@ end
 
 function Board:draw()
     local bx, by = self.x-corner_offest_x, self.y-corner_offest_y
-
-    love.graphics.draw(Image.board, bx, by)
     
-    local hold_x = self.x-corner_offest_x-gap-Image.hold:getWidth()
-    local hold_y = self.y-corner_offest_y+hold_offset_y
-    love.graphics.draw(Image.hold, hold_x, hold_y)
-    if self.hold_type ~= nil then
-        if self.hold_used then
-            love.graphics.setColor(1, 1, 1, ghost_alpha)
+    if not self.compact then
+        local hold_x = self.x-corner_offest_x-gap-Image.hold:getWidth()
+        local hold_y = self.y-corner_offest_y+hold_offset_y
+        love.graphics.draw(Image.hold, hold_x, hold_y)
+        if self.hold_type ~= nil then
+            if self.hold_used then
+                love.graphics.setColor(1, 1, 1, ghost_alpha)
+            end
+            self:draw_mino(hold_x+hold_mino_x+gap, hold_y+hold_mino_y+gap, self.hold_type)
+            Color.reset()
         end
-        self:draw_mino(hold_x+hold_mino_x+gap, hold_y+hold_mino_y+gap, self.hold_type)
-        Color.reset()
+    
+        local next_x = self.x+corner_offest_x+BOARD_W*TILE_SIZE+gap
+        local next_y = self.y-corner_offest_y+next_offset_y
+        love.graphics.draw(Image.next, next_x, next_y)
+        for i = 1, 5 do
+            self:draw_mino(next_x+next_mino_x+gap, next_y+next_mino_y+gap+(i-1)*TILE_SIZE*3, self.next[i])
+        end
+    end
+
+    if self.compact then
+        love.graphics.push()
+        love.graphics.scale(compact_scale, compact_scale)
     end
     
-    local next_x = self.x+corner_offest_x+BOARD_W*TILE_SIZE+gap
-    local next_y = self.y-corner_offest_y+next_offset_y
-    love.graphics.draw(Image.next, next_x, next_y)
-    for i = 1, 5 do
-        self:draw_mino(next_x+next_mino_x+gap, next_y+next_mino_y+gap+(i-1)*TILE_SIZE*3, self.next[i])
-    end
-
-    self:draw_ghost()
-
+    love.graphics.draw(Image.board, bx, by)
     for y = 1, BUFFER_H+BOARD_H do
         for x = 1, BOARD_W do
             local cell = self.grid[y][x]
@@ -255,8 +218,15 @@ function Board:draw()
             end
         end
     end
+    if not self.compact then
+        self:draw_ghost()
+    end
     
     self.current:draw(self.x, self.y)
+
+    if self.compact then
+        love.graphics.pop()
+    end
 end
 
 return Board
