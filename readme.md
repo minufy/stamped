@@ -1,5 +1,5 @@
-# reban
-love2d 템플릿
+# STAMPED
+love2d block stacker
 
 # setup
 `git submodule update --init`
