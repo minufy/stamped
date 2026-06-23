@@ -6,7 +6,6 @@ local Board = require("objects.board")
 local Player = require("objects.player")
 
 function Game:init()
-    self:base_reload()
     self.objects = {}
     local board = self:add(Board, 1, Res.w/2, Res.h/2, {compact = false})
     self:add(Player, board)
